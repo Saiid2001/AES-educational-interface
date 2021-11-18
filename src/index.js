@@ -1,4 +1,5 @@
 import ReactDOM from "react-dom";
+import React from 'react';
 import Tabs from "./pages/Tabs";
 import Landing from "./pages/Landing";
 import './App.css'

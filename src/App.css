@@ -118,6 +118,7 @@ font-size: 3.7vh;
 }
 
 .tab-header svg{
+    font-size: 2.6vh;
     padding-right:10px
 }
 .tab-header:hover{
@@ -129,21 +130,25 @@ font-size: 3.7vh;
     background-color: white;
     color: #28B1EC;
 }
-
-.encryption-tab {
-    display: grid;
-    grid-template-columns: auto min-content;
-    align-content: stretch;
-    justify-content:stretch;
+.tab{
+    position: relative;
 }
 
-.encryption-tab .input-view{
+.encryption-tab {
+    display: flex;
+    align-content: stretch;
+    justify-content:space-between;
+    overflow-x: hidden;
+}
+
+.input-view{
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    flex-grow: 10;
 }
-.encryption-tab .input-view header{
+.input-view header{
     display: flex;
     flex-direction: row;
     min-width: 25rem;
@@ -151,7 +156,7 @@ font-size: 3.7vh;
     transform: translateY(-20vh);
     color:#28B1EC;
 }
-.encryption-tab .input-view header .back-btn{
+.input-view header .back-btn{
     color: #28B1EC;
     text-decoration: underline;
     background:none;
@@ -171,7 +176,7 @@ font-size: 3.7vh;
 }
 
 
-.encryption-tab .input-view form{
+.input-view form{
 
     display: flex;
     flex-direction: column;
@@ -179,7 +184,7 @@ font-size: 3.7vh;
     min-width: 25rem;
 }
 
-.encryption-tab .input-view svg{
+.input-view svg{
     color: #28B1EC;
     margin-right: 5px;
 }
@@ -220,11 +225,11 @@ font-size: 3.7vh;
     border-radius: 6px;
 }
 
-.encryption-tab .action-group{
+.input-view .action-group{
     width: 100%;
     
 }
-.encryption-tab .action-group>button{
+.input-view  .action-group>button{
     border:none;
     padding:0.7rem;
     box-sizing: border-box;
@@ -235,31 +240,31 @@ font-size: 3.7vh;
 
 }
 
-.encryption-tab .action-group button:not([disabled]):hover{
+.input-view .action-group button:not([disabled]):hover{
     opacity: 1;
     box-shadow: #d8d8d854 5px 5px 10px 10px;
     transition: box-shadow 0.2s, opacity 0.2s;
     cursor: pointer;
 }
 
-.encryption-tab .action-group button[disabled]{
+.input-view .action-group button[disabled]{
     background-color: rgb(185, 185, 185);
 }
 
-.encryption-tab .action-group .e-btn, .encryption-tab .action-group .d-btn{
+.input-view .action-group .e-btn, .encryption-tab .action-group .d-btn{
     float: right;
     margin-left: 0.4rem;
 }
 
-.encryption-tab .c-o-r-btn{
+.input-view .c-o-r-btn{
     background: #007AAE;
 }
 
-.encryption-tab .d-btn{
+.input-view .d-btn{
     
 background: #3AD9CF;
 }
-.encryption-tab .e-btn{
+.input-view .e-btn{
     
 background: #28B1EC;
 }
@@ -268,30 +273,185 @@ background: #28B1EC;
 .encryption-tab .log-view{
     height: 100%;
     display: grid;
-    grid-template-columns: 3fr 1fr;
+    grid-template-columns: 2fr 1fr;
     width:calc(100vw - 35rem);
     background-color: rgb(13, 38, 77);
+    transition: width 0.5s ease-in-out;
+    position: relative;
 }
 
 .encryption-tab .log-view.hidden{
-    display: none;
+    width: 0%;
+    transition: width 0.5s ease-in-out;
 }
 
 .encryption-tab .log-view>div{
     
     height: 95vh;
     overflow-y: scroll;
+    overflow-x: hidden;
     color: white;
     
 }
 
-
+*{
+    box-sizing: border-box;
+}
 .encryption-tab .log-view table{
     border-collapse: collapse;
     width: 100%;
+    margin-bottom: 10vh;
 }
 .encryption-tab .log-view th{
     background-color:rgb(6, 23, 49);
     padding:0.4rem;
     position: relative;
+}
+
+.encryption-tab .log-view .step{
+    font-family: 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    
+}
+
+.encryption-tab .log-view .ScrollView td{
+    margin: 0.5rem 2rem;
+}
+
+
+.encryption-tab .log-view .stepName{
+    padding-left: 2rem;
+}
+
+.encryption-tab .log-view .matrix{
+    background-color: rgb(14, 23, 54);
+    display: block;
+    width: fit-content;
+    padding:1rem 2rem;
+    border-radius: 6px;
+    margin:1rem;
+}
+
+.encryption-tab .log-view.hidden .buttons{
+    display: none;
+}
+.encryption-tab .log-view .buttons{
+    position: absolute;
+    bottom: 0px;
+    margin:0.8rem;
+}
+.encryption-tab .log-view button{
+    
+    padding: 1rem;
+    border-radius: 6px;
+    border:none;
+    outline:none;
+    margin: 0.2rem;
+    background-color: #31CCC3;
+    cursor: pointer;
+}
+
+.encryption-tab .log-view button[disabled]{
+    cursor: auto;
+    background-color: rgb(211, 211, 211);
+}
+
+.encryption-tab .log-view button:not(:disabled):hover{
+    color:white;
+}
+
+.avalanche-tab .inputs{
+    display: flex;
+    height: 100%;
+    position: absolute;
+    background-color: white;
+}
+
+.avalanche-tab .inputs.open-0{
+    width: 100%;
+}
+.avalanche-tab .inputs.open-1{
+    width: 50%;
+    right:0;
+}
+
+.avalanche-tab .side-to-side-view{
+    background-color: rgb(230, 230, 230);
+    height: 95vh;
+    width: 100%;
+    display: grid;
+    grid-template-rows: 7rem calc(95vh - 7rem);
+    
+}
+
+.avalanche-tab .side-to-side-view header{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(250, 250, 250);
+    padding: 1rem 0rem;
+    font-size: 1.2rem;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    
+}
+.avalanche-tab .side-to-side-view header em{
+    font-style: normal;
+}
+.avalanche-tab .side-to-side-view header svg{
+    color:#28B1EC;
+}
+.avalanche-tab .side-to-side-view .compared-row{
+    display: grid;
+    grid-template-columns: 1fr 6vw 1fr;
+    width: 100%;
+    justify-items: center;
+    align-content: center;
+    align-items: center;
+    
+    
+}
+.avalanche-tab .ScrollView{
+    overflow:scroll;
+    overflow-x: hidden;
+    height: 100%;
+}
+
+.avalanche-tab .side-to-side-view .compared-row .col{
+    background-color: white;
+    padding: 1rem;
+
+    margin:0.6rem;
+    border-radius: 6px;
+
+}
+
+.side-to-side-view.opened-1{
+    width: 50%;
+}
+
+.side-to-side-view .diff{
+    background-color: #31CCC3;
+    height: 5rem;
+    width: 5rem;
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: normal;
+    border-radius: 50%;
+}
+.side-to-side-view.opened-1 .right-col{
+    display: none;
+}
+.side-to-side-view.opened-1 .compared-row{
+    display: grid;
+    grid-template-columns: 1fr;
+}
+.side-to-side-view .compared-row em{
+    font-style: normal;
+    background-color: #31CCC3;
 }
