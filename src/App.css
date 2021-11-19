@@ -132,9 +132,6 @@ font-size: 3.7vh;
 }
 .tab{
     position: relative;
-}
-
-.encryption-tab {
     display: flex;
     align-content: stretch;
     justify-content:space-between;
@@ -264,10 +261,11 @@ font-size: 3.7vh;
     
 background: #3AD9CF;
 }
-.input-view .e-btn{
+.input-view .e-btn, .input-view .e-k-btn{
     
 background: #28B1EC;
 }
+
 
 
 .encryption-tab .log-view{
@@ -443,6 +441,7 @@ background: #28B1EC;
     color: white;
     font-weight: normal;
     border-radius: 50%;
+    
 }
 .side-to-side-view.opened-1 .right-col{
     display: none;
@@ -454,4 +453,56 @@ background: #28B1EC;
 .side-to-side-view .compared-row em{
     font-style: normal;
     background-color: #31CCC3;
+}
+.side-to-side-view .summary-view{
+    position: relative;
+}
+.side-to-side-view .summary-view .cancel-btn{
+    position: absolute;
+    top:0;
+    left:calc(50% - 14rem);
+    background-color: #28B1EC;
+    border:none;
+    outline:none;
+    border-radius: 50%;
+    padding: 5px 8px;
+}
+.cancel-btn svg{
+    color: white!important;
+}
+
+.key-expansion-tab{
+    flex-direction: column;
+}
+.key-expansion-tab .log-view{
+    background-color: rgb(238, 238, 238);
+    height: min(75%, fit-content);
+    padding-bottom: 3rem;
+    overflow:hidden;
+}
+
+.key-expansion-tab .log-view.hidden{
+
+    height: 0%;
+}
+.key-expansion-tab .log-view .subkey-view{
+    display: inline-block;
+    background-color: white;
+    margin:1rem;
+    border-radius: 6px;
+    overflow: hidden;
+    border-collapse: collapse;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+.key-expansion-tab .log-view .subkey-view tr td:first-child{
+    background-color: #28B1EC;
+    padding-bottom: 0.3rem;
+    padding-top: 0.3rem;
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    color:white;
+}
+.key-expansion-tab .log-view tr td:nth-child(2){
+    padding-left: 0.5rem;
+    padding-right: 1rem;
 }

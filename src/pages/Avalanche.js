@@ -3,7 +3,7 @@ import {InputView, EncryptionStepNames} from './Encryption';
 import AES from '../algorithm/AES';
 import { min } from "lodash";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faLock, faLockOpen, faKey} from "@fortawesome/free-solid-svg-icons";
+import {faLock, faLockOpen, faKey,faTimes} from "@fortawesome/free-solid-svg-icons";
 
 
 class SummaryView extends React.Component{
@@ -18,6 +18,7 @@ class SummaryView extends React.Component{
             <div>
                 <FontAwesomeIcon icon={faLock}/> <em>{"\t"}{this.props.output}</em>
             </div>
+            <button className='cancel-btn'><FontAwesomeIcon icon={faTimes} onClick={this.props.onCancel}/></button>
             </div>;
     }
 }
@@ -85,6 +86,7 @@ class ComparedRow extends React.Component{
 }
 
 class SideToSideView extends React.Component{
+
     render(){
 
         if(this.props.left){
@@ -92,8 +94,8 @@ class SideToSideView extends React.Component{
         
         return <div className={'side-to-side-view opened-'+this.props.opened}>
             <header>
-                <SummaryView input={this.props.left.input} keyInc={this.props.left.key} output={this.props.left.out}/>
-                {this.props.right?<SummaryView input={this.props.right?this.props.right.input:null} keyInc={this.props.right?this.props.right.key:null} output={this.props.right?this.props.right.out:null}/>:null}
+                <SummaryView input={this.props.left.input} keyInc={this.props.left.key} output={this.props.left.out} onCancel={this.props.onCancelLeft}/>
+                {this.props.right?<SummaryView input={this.props.right?this.props.right.input:null} onCancel={this.props.onCancelRight} keyInc={this.props.right?this.props.right.key:null} output={this.props.right?this.props.right.out:null}/>:null}
             </header>
             <main>
                 <div className='ScrollView'>
@@ -113,6 +115,12 @@ class ComparativeInputView extends InputView{
     constructor(props){
         super(props);
         
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.visible !== this.props.visible) {
+            super.setState({key:"", data:"", forceDataOff:false, forceKeyOff:false})
+        }
     }
 
     render(){
@@ -138,9 +146,14 @@ class OneFieldInputView extends InputView{
 
     }
 
+    componentDidUpdate(prevProps) {
+        if (prevProps.visible !== this.props.visible) {
+            super.setState({key:"", data:"", forceDataOff:false, forceKeyOff:false})
+        }
+    }
+
 
     onNewDataEntry(){
-        console.log(this.props.keyEnk)
         super.setState({key: this.props.keyEnk, forceKeyOff: true})
 
     }
@@ -160,7 +173,7 @@ class OneFieldInputView extends InputView{
         if(value=="")
             super.setState({key:"", forceKeyOff: false})
         else
-            super.setState({key:value})
+            super.setState({data:value})
     }
 
     onDataEmptied(){
@@ -172,9 +185,6 @@ class OneFieldInputView extends InputView{
     }
 
     render(){
-
-        console.log(super.setState)
-
 
         if(this.props.visible)
             return super.render();
@@ -190,6 +200,8 @@ class Avalanche extends React.Component{
 
         this.handleEncrypt1 = this.handleEncrypt1.bind(this)
         this.handleEncrypt2 = this.handleEncrypt2.bind(this)
+        this.handleCancelLeft = this.handleCancelLeft.bind(this)
+        this.handleCancelRight = this.handleCancelRight.bind(this)
 
         this.state = {
             openTabs:0
@@ -210,6 +222,20 @@ class Avalanche extends React.Component{
         this.setState({openTabs:2, output2: out})
     }
 
+    handleCancelLeft(){
+
+        if(this.state.openTabs == 2){
+            this.setState({openTabs:1, output1:this.state.output2, output2:null})
+        }else{
+            this.setState({openTabs:0, output1:null})
+        }
+        
+    }
+
+    handleCancelRight(){
+        this.setState({openTabs:1, output2: null})
+    }
+
     render(){
         
         return <div className='tab avalanche-tab'>
@@ -217,7 +243,7 @@ class Avalanche extends React.Component{
             <ComparativeInputView visible={this.state.openTabs==0} step={0} action={1} onEncrypt={this.handleEncrypt1}/>
             <OneFieldInputView visible={this.state.openTabs==1} step={0} action={1} onEncrypt={this.handleEncrypt2} data={this.state.output1?this.state.output1.input:""} keyEnk={this.state.output1?this.state.output1.key:""}/>
         </div>
-        <SideToSideView opened={this.state.openTabs} left={this.state.output1} right={this.state.output2}/>
+        <SideToSideView opened={this.state.openTabs} left={this.state.output1} right={this.state.output2} onCancelLeft={this.handleCancelLeft} onCancelRight={this.handleCancelRight}/>
         </div>
         ;
     }

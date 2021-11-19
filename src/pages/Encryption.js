@@ -29,7 +29,7 @@ export const EncryptionStepNames = [
 
 const hexValues = ['0', '1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
 
-class TextField extends React.Component{
+export class TextField extends React.Component{
 
     constructor(props){
         super(props);
@@ -73,7 +73,7 @@ class TextField extends React.Component{
     render(){
         return <div className='text-field'>{this.props.value?null:null}
             <textarea name={this.props.name} placeholder="Enter Hex Code Here..." onKeyDown={this.handleKeydown} onChange={this.handleValueChange} disabled={this.props.disabled} value={this.props.fixVal?this.props.value:this.state.value}/>
-            <div className='counter'>{this.state.counter}/{this.props.maxNum}</div>
+            <div className='counter'>{this.props.fixVal?this.props.value.length:this.state.counter}/{this.props.maxNum}</div>
         </div>
         
     }
