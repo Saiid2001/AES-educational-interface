@@ -23,7 +23,7 @@ class TabHeaders extends React.Component{
 
     constructor(props){
         super(props)
-        this.state = {index: 0}
+        this.state = {index: props.index}
     }
 
     tabClicked(index){
@@ -40,7 +40,7 @@ class TabHeaders extends React.Component{
         ]
 
         return <div className='tab-headers'>
-            <h2 className='title'>AES</h2>
+            <h2 className='title' onClick ={this.props.onBackClick}>AES</h2>
 
             <div className='buttons'>
                 {tabs}
@@ -55,7 +55,7 @@ class Tabs extends React.Component{
         super(props);
         this.onIndexChange = this.onIndexChange.bind(this);
         this.state = {
-            index: 0,
+            index: props.tab-1,
             _this: this
         };
     }
@@ -85,7 +85,7 @@ class Tabs extends React.Component{
     }
 
     return <div className='tabs'>
-        <TabHeaders onIndexChange = {this.onIndexChange}/>
+        <TabHeaders onIndexChange = {this.onIndexChange} index={this.state.index} onBackClick={()=>{this.props.onTab(0)}}/>
         {page()}
     </div>
 

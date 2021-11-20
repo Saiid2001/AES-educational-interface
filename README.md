@@ -46,4 +46,22 @@ npm run build
 
 Open the html file located in `{project directory}\build\index.html`
 
-> The project contains packages and libraries contributed by `React` and `NodeJS`
+> The project contains packages and libraries contributed by `React`, `NodeJS` and `Electron`
+
+
+## Running the electron app in development mode
+
+```
+npm run electron-start
+```
+
+## Building an installer for the app
+
+```
+npm run dist
+```
+
+## Installing the app and testing
+
+To install the app, download the installer in `./dist`.
+Run the installer and use the app.

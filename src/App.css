@@ -104,7 +104,7 @@ font-size: 3.7vh;
 .tab-headers .title{
     margin:0;
     padding-left: 1rem;
-
+    cursor:pointer;
 }
 
 .tab-header{
@@ -113,7 +113,7 @@ font-size: 3.7vh;
     background:none;
     border:none;
     color:white;
-    font-size: 1.6vh;
+    font-size: 1.8vh;
     transition: background-color 0.2s;
 }
 
@@ -292,7 +292,7 @@ background: #28B1EC;
     
 }
 
-*{
+div, button, header{
     box-sizing: border-box;
 }
 .encryption-tab .log-view table{
@@ -396,6 +396,10 @@ background: #28B1EC;
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     
 }
+
+.avalanche-tab .side-to-side-view.opened-1 header{
+    grid-template-columns: 1fr;
+}
 .avalanche-tab .side-to-side-view header em{
     font-style: normal;
 }
@@ -478,12 +482,14 @@ background: #28B1EC;
     background-color: rgb(238, 238, 238);
     height: min(75%, fit-content);
     padding-bottom: 3rem;
+    box-sizing: border-box;
     overflow:hidden;
 }
 
 .key-expansion-tab .log-view.hidden{
 
     height: 0%;
+    padding: 0;
 }
 .key-expansion-tab .log-view .subkey-view{
     display: inline-block;

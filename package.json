@@ -1,6 +1,8 @@
 {
   "homepage": ".",
   "name": "aes-project-7",
+  "author": "Saiid El Hajj Chehade",
+  "description": "Gui for AES algorithm",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -22,7 +24,11 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "electron-start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "eslintConfig": {
     "extends": [
@@ -44,6 +50,21 @@
   },
   "devDependencies": {
     "electron": "^16.0.0",
-    "react-router-dom": "^6.0.2"
+    "react-router-dom": "^6.0.2",
+    "electron-builder": "^22.14.5"
+  },
+  "main": "./app.js",
+  "icon": "./public/Graphicloads-Flat-Finance-Lock.ico",
+  "build": {
+    "appId": "com.electron.aes-project-7",
+    "extends": null,
+    "files":[
+      "./build/**/*",
+      "**/*"
+    ],
+      "directories": {
+       "buildResources": "./public", 
+       "output": "dist"
+   }
   }
 }
