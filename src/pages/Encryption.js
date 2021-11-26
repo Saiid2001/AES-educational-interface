@@ -301,8 +301,9 @@ class Encryption extends React.Component{
     }
     handleOneRound(data, key){
         let subkeys = AES.expandKey(key)
+        console.log(subkeys)
         let {out, intermediate} = AES.computeOneRound(data, subkeys)
-        this.setState({action:0, step:1, input: data, key: key, output:out, intermediate: intermediate, subkeys: subkeys})
+        this.setState({action:0, step:1, input: data, key: key, output:out, intermediate: intermediate, subkeys: subkeys.map(x=>AES.subkeyToHex(x))})
     }
 
     handleBackClick(){

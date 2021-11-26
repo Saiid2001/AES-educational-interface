@@ -1,215 +1,97 @@
+import { Aes } from "./AesAlg"
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+
+//Rayan's code starts here:
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+
+// implementation of the following 2 functions is from crypto-js
+// Convert a hex string to a byte array
+function hexToBytes(hex) {
+    for (var bytes = [], c = 0; c < hex.length; c += 2)
+        bytes.push(parseInt(hex.substr(c, 2), 16));
+
+    console.log(bytes.length)
+    return bytes;
+}
+
+function hexToBinary(h) {
+    return h.split('').reduce(function(acc, i) {
+        return acc + ('000' + parseInt(i, 16).toString(2)).substr(-4, 4);
+    }, '')
+}
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+
+//Function one: expand key
+function expandKey(key){
+    key = hexToBytes(key);
+    return Aes.keyExpansion(key);
+}
+
+// I used a different fucntion to get form base 10 to hex because I use the first function in encryption. 
+
+// saiid
+function subkeyToHex(subkey){
+    let out = ""
+    for (var i = 0; i<subkey.length;i++){
+       out+=("000"+(subkey[i]).toString(16)).substr(-2, 2);
+    }
+    return out
+}
+
+// saiid
+function stateToHex(state){
+    let out = ""
+    for (var i = 0; i<state.length;i++){
+        for (var j = 0; j<state[i].length; j++)
+            out+=("000"+(state[i][j]).toString(16)).substr(-2, 2);
+    }
+
+    return out
+}
+
 function encrypt(data, key){
-
-
-    return {
-        out: "00112233445566778899aabbccddeeff", 
-        intermediate: [
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-        ],
-        subkeys: [
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-        ]
+    var inputKey = expandKey(key);
+    data = hexToBytes(data);
+    console.log(data)
+    var cipher = Aes.encrypt(data,inputKey);
     
-    }
+    return {
+        'out': stateToHex(cipher.output), 
+        'intermediate': cipher.intermediate.map(state=>{return stateToHex(state)}), 
+        'subkeys': cipher.subkeys.map(subkey=>{return subkeyToHex(subkey)})
+    }; 
+    
 }
 
-function decrypt(data, key){
+// saiid
+function differences(s1,s2){
+//implement differences 
+    let diff = []
 
-    return {
-        out: "00112233445566778899aabbccddeeff", 
-        intermediate: [
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-        ], 
-        subkeys:  [
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-        ]
-    
+    for (let i = 0; i < s1.length; i++) {
+        if(s1[i] != s2[i]) diff.push(i)
     }
+
+    return diff;
 }
 
+//saiid
 function computeOneRound(data, subkeys){
 
+    var result = Aes.oneRound(Aes.bytesToState(hexToBytes(data)), subkeys, 1, 4)
+
     return {
-        out: "00112233445566778899aabbccddeeff", 
-        intermediate: [
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-            "00112233445566778899aabbccddeeff",
-        ], 
+        out: stateToHex(result.output),
+        intermediate: result.intermediate.map(x=>stateToHex(x))
     }
 }
 
-function expandKey(key){
-
-
-    return [
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-            "00112233",
-        ]
-    
-
+function decrypt(){
+    //implement decrypt here
 }
-
-
-function hexToBinary(hex){
-    return '0000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000'
-}
-
-function differences(s1, s2){
-    return [0,2,4,5,6,7,8,11,12]
-}
-
-
-
 
 export default  {
     encrypt, 
@@ -217,5 +99,6 @@ export default  {
     computeOneRound, 
     expandKey,
     hexToBinary,
-    differences
+    differences,
+    subkeyToHex
 }

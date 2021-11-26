@@ -307,7 +307,8 @@ div, button, header{
 }
 
 .encryption-tab .log-view .step{
-    font-family: 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    
+font-family: "Courier New", Courier, monospace;
     
 }
 
@@ -393,7 +394,7 @@ div, button, header{
     justify-content: center;
     align-items: center;
     text-align: center;
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-family: "Courier New", Courier, monospace;
     
 }
 
@@ -413,6 +414,7 @@ div, button, header{
     justify-items: center;
     align-content: center;
     align-items: center;
+    font-family: "Courier New", Courier, monospace;
     
     
 }
@@ -498,7 +500,7 @@ div, button, header{
     border-radius: 6px;
     overflow: hidden;
     border-collapse: collapse;
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-family: "Courier New", Courier, monospace;
 }
 .key-expansion-tab .log-view .subkey-view tr td:first-child{
     background-color: #28B1EC;

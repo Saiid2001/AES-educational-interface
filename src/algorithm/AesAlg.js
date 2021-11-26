@@ -1,70 +1,4 @@
-/* http://www.movable-type.co.uk/scripts/aes.html */
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-/*  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-/*  Encrypt/decrypt files                                                                         */
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-
-function encryptFile(file) {
-    // use FileReader.readAsArrayBuffer to handle binary files
-    var reader = new FileReader();
-    reader.readAsArrayBuffer(file);
-    reader.onload = function(evt) {
-        $('body').css({'cursor':'wait'});
-
-        // Aes.Ctr.encrypt expects a string, but converting binary file directly to string could
-        // give invalid Unicode sequences, so convert bytestream ArrayBuffer to single-byte chars
-        var contentBytes = new Uint8Array(reader.result); // ≡ evt.target.result
-        var contentStr = '';
-        for (var i=0; i<contentBytes.length; i++) {
-            contentStr += String.fromCharCode(contentBytes[i]);
-        }
-
-        var password = $('#password-file').val();
-
-        var t1 = new Date();
-        var ciphertext = Aes.Ctr.encrypt(contentStr, password, 256);
-        var t2 = new Date();
-
-        // use Blob to save encrypted file
-        var blob = new Blob([ciphertext], { type: 'text/plain' });
-        var filename = file.name+'.encrypted';
-        saveAs(blob, filename);
-
-        $('#encrypt-file-time').html(((t2 - t1)/1000)+'s'); // display time taken
-        $('body').css({'cursor':'default'});
-    }
-}
-
-function decryptFile(file) {
-    // use FileReader.ReadAsText to read (base64-encoded) ciphertext file
-    var reader = new FileReader();
-    reader.readAsText(file);
-    reader.onload = function(evt) {
-        $('body').css({'cursor':'wait'});
-
-        var content = reader.result; // ≡ evt.target.result
-        var password = $('#password-file').val();
-
-        var t1 = new Date();
-        var plaintext = Aes.Ctr.decrypt(content, password, 256);
-        var t2 = new Date();
-
-        // convert single-byte character stream to ArrayBuffer bytestream
-        var contentBytes = new Uint8Array(plaintext.length);
-        for (var i=0; i<plaintext.length; i++) {
-            contentBytes[i] = plaintext.charCodeAt(i);
-        }
-
-        // use Blob to save decrypted file
-        var blob = new Blob([contentBytes], { type: 'application/octet-stream' });
-        var filename = file.name.replace(/\.encrypted$/,'')+'.decrypted';
-        saveAs(blob, filename);
-
-        $('#decrypt-file-time').html(((t2 - t1)/1000)+'s'); // display time taken
-        $('body').css({'cursor':'default'});
-    }
-}                    
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
 /* jshint node:true *//* global define */
@@ -78,8 +12,14 @@ function decryptFile(file) {
  *
  * @namespace
  */
-var Aes = {};
 
+export var Aes = {};
+
+Aes.bytesToState = function(bytes){
+    let state = [[],[],[],[]];  // initialise 4xNb byte-array 'state' with input [§3.4]
+    for (var i=0; i<16; i++) state[i%4][Math.floor(i/4)] = bytes[i];
+    return state;
+}
 
 /**
  * AES Cipher function: encrypt 'input' state with Rijndael algorithm [§5.1];
@@ -89,32 +29,45 @@ var Aes = {};
  * @param   {number[][]} w - Key schedule as 2D byte-array (Nr+1 x Nb bytes).
  * @returns {number[]}   Encrypted output state array.
  */
-Aes.cipher = function(input, w) {
+Aes.encrypt = function(input, w) {
     var Nb = 4;               // block size (in words): no of columns in state (fixed at 4 for AES)
     var Nr = w.length/Nb - 1; // no of rounds: 10/12/14 for 128/192/256-bit keys
 
-    var state = [[],[],[],[]];  // initialise 4xNb byte-array 'state' with input [§3.4]
+    let state = [[],[],[],[]];  // initialise 4xNb byte-array 'state' with input [§3.4]
     for (var i=0; i<4*Nb; i++) state[i%4][Math.floor(i/4)] = input[i];
 
+    console.log('after input ', state.toString())
+
+    let roundStates = []
+
     state = Aes.addRoundKey(state, w, 0, Nb);
+    roundStates.push(JSON.parse(JSON.stringify(state)))
 
     for (var round=1; round<Nr; round++) {
-        state = Aes.subBytes(state, Nb);
-        state = Aes.shiftRows(state, Nb);
-        state = Aes.mixColumns(state, Nb);
-        state = Aes.addRoundKey(state, w, round, Nb);
+        state = Aes.oneRound(state, w,round, Nb)['output']
+        roundStates.push(JSON.parse(JSON.stringify(state)))
     }
 
     state = Aes.subBytes(state, Nb);
     state = Aes.shiftRows(state, Nb);
     state = Aes.addRoundKey(state, w, Nr, Nb);
+    roundStates.push(JSON.parse(JSON.stringify(state)))
 
-    var output = new Array(4*Nb);  // convert state to 1-d array before returning [§3.4]
-    for (var i=0; i<4*Nb; i++) output[i] = state[i%4][Math.floor(i/4)];
+    //var output = new Array(4*Nb);  // convert state to 1-d array before returning [§3.4]
+    //for (var i=0; i<4*Nb; i++) output[i] = state[i%4][Math.floor(i/4)];
 
-    return output;
+    return {'output': state, 'intermediate': roundStates, 'subkeys': w} 
 };
 
+// added by Ryan
+Aes.oneRound = function(state, w,round, Nb){
+    let state1 = Aes.subBytes(JSON.parse(JSON.stringify(state)), Nb);
+    let state2 = Aes.shiftRows(JSON.parse(JSON.stringify(state1)), Nb);
+    let state3 = Aes.mixColumns(JSON.parse(JSON.stringify(state2)), Nb);
+    let state4 = Aes.addRoundKey(JSON.parse(JSON.stringify(state3)), w, round, Nb);
+
+    return {'output': state4, 'intermediate': [state1, state2, state3, state4]}
+}
 
 /**
  * Perform key expansion to generate a key schedule from a cipher key [§5.2].
@@ -226,7 +179,6 @@ Aes.subWord = function(w) {
     return w;
 };
 
-
 /**
  * Rotate 4-byte word w left by one byte
  * @private
@@ -237,7 +189,6 @@ Aes.rotWord = function(w) {
     w[3] = tmp;
     return w;
 };
-
 
 // sBox is pre-computed multiplicative inverse in GF(2^8) used in subBytes and keyExpansion [§5.1.1]
 Aes.sBox =  [0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,
@@ -257,6 +208,22 @@ Aes.sBox =  [0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0x
              0xe1,0xf8,0x98,0x11,0x69,0xd9,0x8e,0x94,0x9b,0x1e,0x87,0xe9,0xce,0x55,0x28,0xdf,
              0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16];
 
+Aes.isBox = [ 0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb
+            , 0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb
+            , 0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e
+            , 0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25
+            , 0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92
+            , 0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84
+            , 0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06
+            , 0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b
+            , 0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73
+            , 0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e
+            , 0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b
+            , 0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4
+            , 0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f
+            , 0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef
+            , 0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61
+            , 0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d ];
 
 // rCon is Round Constant used for the Key Expansion [1st col is 2^(r-1) in GF(2^8)] [§5.2]
 Aes.rCon = [ [0x00, 0x00, 0x00, 0x00],
@@ -272,172 +239,3 @@ Aes.rCon = [ [0x00, 0x00, 0x00, 0x00],
              [0x36, 0x00, 0x00, 0x00] ]; 
 
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-if (typeof module != 'undefined' && module.exports) module.exports = Aes; // CommonJs export
-if (typeof define == 'function' && define.amd) define([], function() { return Aes; }); // AMD
-
-
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-
-
-//Rayan's code starts here:
-
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-
-
-//let keyInput = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
-//let keyInput2 = [0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0x10,0x11,0x12,0x13,0x14,0x15];
-
-
-function bin2hex(b) {
-    return b.match(/.{4}/g).reduce(function(acc, i) {
-        return acc + parseInt(i, 2).toString(16);
-    }, '')
-}
-
-function hexClean (stringHex){
-    var newArray = [];
-    for (let i = 0; i<stringHex.length;i++){
-        if (stringHex[i]=='a'){newArray[i]=10;}
-        else if (stringHex[i]=='b'){newArray[i]=11;}
-        else if (stringHex[i]=='c'){newArray[i]=12;}
-        else if (stringHex[i]=='d'){newArray[i]=13;}
-        else if (stringHex[i]=='e'){newArray[i]=14;}
-        else if (stringHex[i]=='f'){newArray[i]=15;}
-        else {newArray[i]= Number(stringHex[i])}
-    }
-    return newArray;
-}
-
-function hex2bin(h) {
-    return h.split('').reduce(function(acc, i) {
-        return acc + ('000' + parseInt(i, 16).toString(2)).substr(-4, 4);
-    }, '')
-}
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-
-let keyInputBinary = "0000000100100011010001010110011110001001101010111100110111101111";
-let dataInputBinary = "0011001101010101100010000111011100110011010101011000100001110111";
-
-//Function one: expand key
-
-function expandKey(key){
-    key = bin2hex(key);
-    key = hexClean(key);
-    return Aes.keyExpansion(key);
-}
-
-function convertKeyHex(key){
-    for (var i = 0; i<key.length;i++){
-        for (var j = 0; j<4; j++){
-            key[i][j]= (key[i][j]).toString(16);
-        }
-    }
-    return key; 
-}
-
-// I used a different fucntion to get form base 10 to hex because I use the first function in encryption. 
-
-function encryptData(data, key){
-    var inputKey = expandKey(key);
-    var newData = bin2hex(data);
-    newData = hexClean(newData);
-    var cipher = Aes.cipher(newData,inputKey);
-    for (var i = 0; i<cipher.length;i++){
-        cipher[i]= (cipher[i]).toString(16);
-    }
-    return cipher; 
-    
-}
-//full encryption function
-//returns final state array in base 10, we must convert
-
-function computeOneRound(data, key, index){
-    var inputKey = expandKey(key);
-    var newData = bin2hex(data);
-    newData = hexClean(newData);
-    roundArray = oneRound(newData, inputKey);
-    finalArr = roundArray[index];
-    for (var i = 0; i<finalArr.length;i++){
-        
-        finalArr[i]= (finalArr[i]).toString(16);
-        
-    }
-    return finalArr; 
-}
-//returns final state after round "index"
-
-function oneRound (input, w) {
-    var Nb = 4;               
-    var Nr = w.length/Nb - 1; 
-    
-    var allStates = [...Array(10)].map(e => Array(16)); // Added here ~ RAYAN 
-
-    var state = [[],[],[],[]];  
-    for (var i=0; i<4*Nb; i++) state[i%4][Math.floor(i/4)] = input[i];
-
-    state = Aes.addRoundKey(state, w, 0, Nb);
-
-    allStates[0] = state; // Added here ~ RAYAN 
-
-    for (var round=1; round<Nr; round++) {
-        state = Aes.subBytes(state, Nb);
-        state = Aes.shiftRows(state, Nb);
-        state = Aes.mixColumns(state, Nb);
-        state = Aes.addRoundKey(state, w, round, Nb);
-        allStates[round] = state; // Added here ~ RAYAN 
-    }
-
-    state = Aes.subBytes(state, Nb);
-    state = Aes.shiftRows(state, Nb);
-    state = Aes.addRoundKey(state, w, Nr, Nb);
- 
-
-    var output = new Array(4*Nb);  
-    for (var i=0; i<4*Nb; i++) output[i] = state[i%4][Math.floor(i/4)];
-
-    allStates[10] = output; // Added here ~ RAYAN
-
-    return allStates;
-};
-
-// function roundDetails(roundNumber,key){
-//     var Nb = 4; 
-//     var state = computeOneRound(roundNumber-1); 
-//     var interState = [[],[],[],[]]; 
-//     var w = expandKey(key);
-
-//     state = Aes.subBytes(state, Nb);
-//     interState[0]=state;
-//     state = Aes.shiftRows(state, Nb);
-//     interState[1]=state;
-//     state = Aes.mixColumns(state, Nb);
-//     interState[2]=state;
-//     state = Aes.addRoundKey(state, w, roundNumber, Nb);
-//     interState[3]=state;
-//     return interState;
-// }
-
-//This function is not working; need fixing
-
-function differences(s1,s2){
-//implement differences 
-}
-
-function decrypt(){
-    //implement decrypt here
-}
-
-
-//Here you can test the different functions
-
-//console.log(encryptData(dataInputBinary,keyInputBinary))
-//console.log(computeOneRound(dataInputBinary,keyInputBinary,10))
-//console.log(hex2bin(encryptData(dataInputBinary,keyInputBinary)))
-
-//console.log(expandKey(keyInputBinary))
-
-console.log(roundDetails(5,keyInputBinary))
