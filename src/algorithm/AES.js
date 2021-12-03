@@ -44,9 +44,9 @@ function subkeyToHex(subkey){
 // saiid
 function stateToHex(state){
     let out = ""
-    for (var i = 0; i<state.length;i++){
-        for (var j = 0; j<state[i].length; j++)
-            out+=("000"+(state[i][j]).toString(16)).substr(-2, 2);
+    for (var i = 0; i<4;i++){
+        for (var j = 0; j<4; j++)
+            out+=("000"+(state[j][i]).toString(16)).substr(-2, 2);
     }
 
     return out
@@ -55,7 +55,6 @@ function stateToHex(state){
 function encrypt(data, key){
     var inputKey = expandKey(key);
     data = hexToBytes(data);
-    console.log(data)
     var cipher = Aes.encrypt(data,inputKey);
     
     return {
@@ -89,8 +88,21 @@ function computeOneRound(data, subkeys){
     }
 }
 
-function decrypt(){
-    //implement decrypt here
+function decrypt(data, key){
+    var inputKey = expandKey(key);
+
+    //reverse the key order for decryption
+    //inputKey.reverse();
+
+    data = hexToBytes(data);
+    var cipher = Aes.decrypt(data,inputKey);
+    
+    return {
+        'out': stateToHex(cipher.output), 
+        'intermediate': cipher.intermediate.map(state=>{return stateToHex(state)}), 
+        'subkeys': cipher.subkeys.map(subkey=>{return subkeyToHex(subkey)})
+    }; 
+    
 }
 
 export default  {

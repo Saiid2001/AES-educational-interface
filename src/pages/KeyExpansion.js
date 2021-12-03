@@ -121,8 +121,8 @@ class KeyExpansion extends React.Component{
     }
 
     handleExpandKey(value){
-        let out = AES.expandKey(value)
-        this.setState({step:1, subkeys:out})
+        let out = AES.expandKey(value);
+        this.setState({step:1, subkeys:out.map(x=>AES.subkeyToHex(x))})
     }
 
     render(){

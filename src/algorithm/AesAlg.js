@@ -36,11 +36,11 @@ Aes.encrypt = function(input, w) {
     let state = [[],[],[],[]];  // initialise 4xNb byte-array 'state' with input [§3.4]
     for (var i=0; i<4*Nb; i++) state[i%4][Math.floor(i/4)] = input[i];
 
-    console.log('after input ', state.toString())
-
     let roundStates = []
 
+    console.log("[ENC] start: "+state.toString())
     state = Aes.addRoundKey(state, w, 0, Nb);
+    console.log("[ENC] add round-0: "+state.toString())
     roundStates.push(JSON.parse(JSON.stringify(state)))
 
     for (var round=1; round<Nr; round++) {
@@ -48,9 +48,14 @@ Aes.encrypt = function(input, w) {
         roundStates.push(JSON.parse(JSON.stringify(state)))
     }
 
+    
     state = Aes.subBytes(state, Nb);
+    console.log("[ENC] Round last subBytes: "+state.toString())
     state = Aes.shiftRows(state, Nb);
+    console.log("[ENC] Round last shiftRows: "+state.toString())
     state = Aes.addRoundKey(state, w, Nr, Nb);
+    console.log("[ENC] Round last addKey: "+state.toString())
+
     roundStates.push(JSON.parse(JSON.stringify(state)))
 
     //var output = new Array(4*Nb);  // convert state to 1-d array before returning [§3.4]
@@ -62,9 +67,62 @@ Aes.encrypt = function(input, w) {
 // added by Ryan
 Aes.oneRound = function(state, w,round, Nb){
     let state1 = Aes.subBytes(JSON.parse(JSON.stringify(state)), Nb);
+    console.log("[ENC] Round "+round+" subBytes: "+state1.toString())
     let state2 = Aes.shiftRows(JSON.parse(JSON.stringify(state1)), Nb);
+    console.log("[ENC] Round "+round+" shiftRows: "+state2.toString())
     let state3 = Aes.mixColumns(JSON.parse(JSON.stringify(state2)), Nb);
+    console.log("[ENC] Round "+round+" mixCols: "+state3.toString())
     let state4 = Aes.addRoundKey(JSON.parse(JSON.stringify(state3)), w, round, Nb);
+    console.log("[ENC] Round "+round+" addKey: "+state4.toString())
+
+    return {'output': state4, 'intermediate': [state1, state2, state3, state4]}
+}
+
+// added by Saiid
+Aes.decrypt = function(input, w){
+
+    // w already flipped
+
+    var Nb = 4;               // block size (in words): no of columns in state (fixed at 4 for AES)
+    var Nr = w.length/Nb - 1; // no of rounds: 10/12/14 for 128/192/256-bit keys
+
+    let state = [[],[],[],[]];  // initialise 4xNb byte-array 'state' with input [§3.4]
+    for (var i=0; i<4*Nb; i++) state[i%4][Math.floor(i/4)] = input[i];
+
+    let roundStates = []
+
+    console.log("[DEC] start: "+state.toString())
+    state = Aes.addRoundKey(state, w, Nr, Nb);
+    console.log("[DEC] add round-0: "+state.toString())
+    roundStates.push(JSON.parse(JSON.stringify(state)))
+
+    for (var round=1; round<Nr; round++) {
+        state = Aes.oneRoundDecrypt(state, w,Nr-round, Nb)['output']
+        roundStates.push(JSON.parse(JSON.stringify(state)))
+    }
+
+    state = Aes.invShiftRows(state, Nb);
+    console.log("[DEC] Round last shift-1: "+state.toString())
+    state = Aes.invSubBytes(state, Nb);
+    console.log("[DEC] Round last sub-1: "+state.toString())
+    state = Aes.addRoundKey(state, w, 0, Nb);
+    console.log("[DEC] Round last addKey: "+state.toString())
+    roundStates.push(JSON.parse(JSON.stringify(state)))
+
+    return {'output': state, 'intermediate': roundStates, 'subkeys': w} 
+}
+
+//added by saiid
+Aes.oneRoundDecrypt = function(state, w,round, Nb){
+
+    let state1 = Aes.invShiftRows(JSON.parse(JSON.stringify(state)), Nb);
+    console.log("[DEC] Round "+round+" shift-1: "+state1.toString())
+    let state2 = Aes.invSubBytes(JSON.parse(JSON.stringify(state1)), Nb);
+    console.log("[DEC] Round "+round+" subBytes-1: "+state2.toString())
+    let state3 = Aes.addRoundKey(JSON.parse(JSON.stringify(state2)), w, round, Nb);
+    console.log("[DEC] Round "+round+" addKey: "+state3.toString())
+    let state4 = Aes.invMixCols(JSON.parse(JSON.stringify(state3)), Nb);
+    console.log("[DEC] Round "+round+" mixCols-1: "+state4.toString())
 
     return {'output': state4, 'intermediate': [state1, state2, state3, state4]}
 }
@@ -121,6 +179,13 @@ Aes.subBytes = function(s, Nb) {
     return s;
 };
 
+Aes.invSubBytes = function(s, Nb){
+    for (var r=0; r<4; r++){
+        for (var c=0; c<Nb; c++) s[r][c] = Aes.isBox[s[r][c]];
+    }
+    return s;
+}
+
 
 /**
  * Shift row r of state S left by r bytes [§5.1.2]
@@ -129,12 +194,26 @@ Aes.subBytes = function(s, Nb) {
 Aes.shiftRows = function(s, Nb) {
     var t = new Array(4);
     for (var r=1; r<4; r++) {
-        for (var c=0; c<4; c++) t[c] = s[r][(c+r)%Nb];  // shift into temp copy
+        //console.log(s[r].toString()) 
+        for (var c=0; c<4; c++) t[c] = s[r][(c+r)%Nb]; // shift into temp copy
         for (var c=0; c<4; c++) s[r][c] = t[c];         // and copy back
+        //console.log(t.toString()) 
     }          // note that this will work for Nb=4,5,6, but not 7,8 (always 4 for AES):
     return s;  // see asmaes.sourceforge.net/rijndael/rijndaelImplementation.pdf
 };
 
+// added by Ryan alam
+Aes.invShiftRows = function(s, Nb){
+    var t = new Array(4);
+    for (var r=1; r<4; r++){
+        //console.log("s "+s[r].toString()) 
+        for (var c=0; c<4; c++) t[c] = s[r][(4+c-r)%Nb];
+        //console.log("i "+[(4-r)%Nb, (4+1-r)%Nb, (4+2-r)%Nb, (4+3-r)%Nb].toString())
+        //console.log("t "+t.toString())
+        for (var c=0; c<4; c++) s[r][c] = t[c];
+    }
+    return s;
+}
 
 /**
  * Combine bytes of each col of state S [§5.1.3]
@@ -158,6 +237,21 @@ Aes.mixColumns = function(s, Nb) {
 };
 
 
+// added by Ryan Alam
+Aes.invMixCols = function(s, Nb) {
+    for (var c=0; c<4; c++) {
+
+        let a0=s[0][c], a1=s[1][c], a2=s[2][c], a3=s[3][c];
+        
+        s[0][c] = GFMul(a0, 0x0e)^GFMul(a1, 0x0b)^GFMul(a2, 0x0d)^GFMul(a3, 0x09); // {14}•a0 + {11}•a1 + {13}a2 + {9}a3
+        s[1][c] = GFMul(a0, 0x09)^GFMul(a1, 0x0e)^GFMul(a2, 0x0b)^GFMul(a3, 0x0d); // {9}a0 • {14}•a1 + {11}•a2 + {13}a3
+        s[2][c] = GFMul(a0, 0x0d)^GFMul(a1, 0x09)^GFMul(a2, 0x0e)^GFMul(a3, 0x0b); // {13}a0 + {9}a1 + {14}•a2 + {11}•a3
+        s[3][c] = GFMul(a0, 0x0b)^GFMul(a1, 0x0d)^GFMul(a2, 0x09)^GFMul(a3, 0x0e); // {11}•a0 + {13}a1 + {9}a2 + {14}•a3
+    }
+    return s;
+}
+
+
 /**
  * Xor Round Key into state S [§5.1.4]
  * @private
@@ -168,7 +262,6 @@ Aes.addRoundKey = function(state, w, rnd, Nb) {
     }
     return state;
 };
-
 
 /**
  * Apply SBox to 4-byte word w
@@ -208,6 +301,7 @@ Aes.sBox =  [0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0x
              0xe1,0xf8,0x98,0x11,0x69,0xd9,0x8e,0x94,0x9b,0x1e,0x87,0xe9,0xce,0x55,0x28,0xdf,
              0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16];
 
+// aes inverse s box
 Aes.isBox = [ 0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb
             , 0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb
             , 0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e
@@ -237,5 +331,26 @@ Aes.rCon = [ [0x00, 0x00, 0x00, 0x00],
              [0x80, 0x00, 0x00, 0x00],
              [0x1b, 0x00, 0x00, 0x00],
              [0x36, 0x00, 0x00, 0x00] ]; 
+
+
+/**
+ *  Multiplication over Finite Fields GF(2^8)
+ */
+ function GFMul( a,  b) {
+    let p = 0;
+    let hi_bit_set;
+    for (var counter = 0; counter < 8; counter++) {
+        if ((b & 0x01) != 0) {
+            p ^= a;
+        }
+        hi_bit_set = (a & 0x80);
+        a <<= 1;
+        if (hi_bit_set != 0) {
+            a ^= 0x11b; /* x^8 + x^4 + x^3 + x + 1 */
+        }
+        b >>= 1;
+    }
+    return p;
+}
 
 
